@@ -1,302 +1,50 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Hana Coffee - Order Online</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-  </style>
-</head>
-<body class="bg-stone-100 text-stone-800 font-sans pb-28">
-  <div id="app" class="max-w-md mx-auto min-h-screen flex flex-col bg-stone-50 shadow-md">
-    
-    <!-- 顶部店招与桌号 -->
-    <header class="bg-stone-900 text-white p-4 sticky top-0 z-20 shadow flex justify-between items-center">
-      <div>
-        <h1 class="font-bold text-lg tracking-wide">Hana Coffee</h1>
-        <p class="text-xs text-stone-400">Table / 桌号: <span class="text-amber-400 font-bold text-sm">{{ tableNumber }}</span></p>
-      </div>
-      <span class="text-xs bg-amber-600/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full">Open / 营业中</span>
-    </header>
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-    <!-- 分类横向滚动栏 (英文在上，中文在下) -->
-    <div class="flex overflow-x-auto p-2.5 space-x-2 bg-white border-b sticky top-[68px] z-10 no-scrollbar">
-      <button v-for="cat in categories" :key="cat.en" @click="activeCat = cat.en"
-              :class="activeCat === cat.en ? 'bg-stone-900 text-white font-medium shadow-sm' : 'bg-stone-100 text-stone-600'"
-              class="px-3 py-1.5 rounded-xl text-center shrink-0 transition flex flex-col items-center justify-center">
-        <span class="text-xs font-semibold leading-none">{{ cat.en }}</span>
-        <span class="text-[10px] opacity-75 mt-0.5 leading-none">{{ cat.zh }}</span>
-      </button>
-    </div>
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
 
-    <!-- 菜单列表 -->
-    <main class="flex-1 p-3 space-y-3">
-      <div v-for="item in filteredItems" :key="item.id" class="bg-white p-3.5 rounded-2xl shadow-sm border border-stone-100 flex items-center justify-between">
-        <div class="pr-2 flex-1">
-          <h3 class="font-bold text-stone-800 text-sm leading-snug">{{ item.name }}</h3>
-          <p v-if="item.desc" class="text-[11px] text-stone-400 mt-0.5 leading-tight">{{ item.desc }}</p>
-          <div class="mt-2 text-amber-700 font-extrabold text-sm">{{ item.price.toLocaleString() }} <span class="text-[10px] font-normal text-stone-500">MMK</span></div>
-        </div>
-        <div class="flex items-center space-x-2 shrink-0">
-          <button v-if="getQty(item.id) > 0" @click="decQty(item)" class="w-7 h-7 rounded-full bg-stone-100 text-stone-700 font-bold flex items-center justify-center text-sm active:scale-95 transition">-</button>
-          <span v-if="getQty(item.id) > 0" class="w-5 text-center text-xs font-bold">{{ getQty(item.id) }}</span>
-          <button @click="incQty(item)" class="w-7 h-7 rounded-full bg-stone-900 text-white font-bold flex items-center justify-center text-sm active:scale-95 transition">+</button>
-        </div>
-      </div>
-    </main>
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-    <!-- 底部结算栏 -->
-    <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur border-t p-3 flex justify-between items-center z-20 shadow-lg">
-      <div>
-        <div class="text-[10px] text-stone-400">Total / 总计</div>
-        <div class="text-base font-extrabold text-amber-700">{{ totalAmount.toLocaleString() }} <span class="text-xs font-normal text-stone-500">MMK</span></div>
-      </div>
-      <button :disabled="totalQty === 0" @click="showModal = true"
-              class="bg-stone-900 disabled:bg-stone-300 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition flex flex-col items-center">
-        <span>Checkout ({{ totalQty }})</span>
-        <span class="text-[9px] opacity-75 font-normal">去结算</span>
-      </button>
-    </footer>
+  try {
+    const { table, payment, note, items, totalAmount } = req.body;
 
-    <!-- 结算弹窗 -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/60 z-30 flex items-end justify-center">
-      <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-        <div class="flex justify-between items-center border-b pb-3">
-          <div>
-            <h3 class="font-bold text-sm text-stone-800">Order Summary</h3>
-            <p class="text-[10px] text-stone-400">订单详情核对</p>
-            <div class="flex items-center space-x-1.5 mt-1.5">
-              <span class="text-[11px] text-stone-500 font-medium">Table / 桌号:</span>
-              <select v-model="tableNumber" class="text-xs font-bold text-amber-700 bg-stone-100 border border-stone-200 rounded px-1.5 py-0.5 outline-none">
-                <option value="01">Table 01 (1号桌)</option>
-                <option value="02">Table 02 (2号桌)</option>
-                <option value="03">Table 03 (3号桌)</option>
-                <option value="04">Table 04 (4号桌)</option>
-                <option value="05">Table 05 (5号桌)</option>
-                <option value="06">Table 06 (6号桌)</option>
-                <option value="07">Table 07 (7号桌)</option>
-                <option value="Bar">Bar (吧台)</option>
-              </select>
-            </div>
-          </div>
-          <button @click="showModal = false" class="text-stone-400 text-xl font-bold p-1">✕</button>
-        </div>
+    // 填入你的 Loyverse Token
+    const LOYVERSE_TOKEN = "在此填入你的Access_Token";
+    const STORE_ID = "0d505168-6122-4b16-846d-a8ef254af4c6";
 
-        <!-- 点单清单 -->
-        <div class="space-y-1 text-xs text-stone-600 max-h-32 overflow-y-auto pr-1">
-          <div v-for="(qty, id) in cart" :key="id" class="flex justify-between py-1 border-b border-dashed border-stone-100">
-            <span>{{ getItem(id).name }} × {{ qty }}</span>
-            <span class="font-semibold text-stone-800">{{ (getItem(id).price * qty).toLocaleString() }} MMK</span>
-          </div>
-        </div>
+    const line_items = items.map(item => ({
+      note: item.name,
+      quantity: item.qty,
+      price: item.price,
+      gross_total_money: item.price * item.qty,
+      total_money: item.price * item.qty
+    }));
 
-        <!-- 结算方式选择 -->
-        <div class="space-y-2 pt-1">
-          <div>
-            <div class="text-xs font-bold text-stone-800">Payment Method</div>
-            <div class="text-[10px] text-stone-400">选择结算方式</div>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <button @click="payMethod = 'CASH'" :class="payMethod === 'CASH' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2 rounded-xl text-center text-xs transition flex flex-col items-center justify-center">
-              <span>💵 Cash at Counter</span>
-              <span class="text-[10px] text-stone-400 font-normal mt-0.5">到吧台现金结账</span>
-            </button>
-            <button @click="payMethod = 'QR'" :class="payMethod === 'QR' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2 rounded-xl text-center text-xs transition flex flex-col items-center justify-center">
-              <span>📱 KBZPay QR</span>
-              <span class="text-[10px] text-stone-400 font-normal mt-0.5">扫码转账支付</span>
-            </button>
-          </div>
-        </div>
+    // 向 Loyverse 写入单据
+    const response = await fetch("https://api.loyverse.com/v1.0/receipts", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${LOYVERSE_TOKEN}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        store_id: STORE_ID,
+        receipt_type: "SALE",
+        note: `【Table ${table}】| ${payment === 'CASH' ? 'Cash at Counter' : 'KBZPay Completed'} | Note: ${note || 'None'}`,
+        line_items: line_items,
+        total_money: totalAmount
+      })
+    });
 
-        <!-- KBZPay 收款码展示 -->
-        <div v-if="payMethod === 'QR'" class="bg-sky-50/70 border border-sky-100 p-3 rounded-2xl text-center space-y-2">
-          <div>
-            <div class="text-[11px] font-bold text-sky-900">Scan QR via KBZPay</div>
-            <div class="text-[10px] text-sky-700">使用 KBZPay 扫码付款</div>
-          </div>
-          
-          <div class="w-48 mx-auto bg-white p-2 rounded-xl shadow-sm border border-stone-100">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021130540016A0000007270401120112097980502200214DAW%20KYANG%20LANG%20CHIN52045999531041045802MM5918DAW%20KYANG%20LANG%20CHIN6006YANGON62180114097980502200216304E8A5" alt="KBZPay QR" class="w-full h-auto rounded-lg">
-          </div>
-
-          <div class="text-[10px] text-stone-500 leading-tight">
-            Account / 账户: <span class="font-bold text-stone-700">DAW KYANG LANG CHIN</span><br>
-            Phone / 尾号: <span class="font-bold text-stone-700">******0220</span>
-          </div>
-          <p class="text-[10px] text-amber-700 font-medium">Please screenshot/save QR to pay, then click confirm below.<br><span class="text-[9px] text-stone-400">截图或长按保存二维码付款，随后点击确认</span></p>
-        </div>
-
-        <!-- 备注需求 -->
-        <div class="space-y-1">
-          <input v-model="orderNote" placeholder="Notes (e.g. less sugar, iced, hot) / 备注特殊需求" class="w-full text-xs border border-stone-200 rounded-xl p-2.5 outline-none focus:border-stone-800">
-        </div>
-
-        <!-- 提交按钮 -->
-        <button @click="submitOrder" :disabled="submitting" class="w-full bg-stone-900 text-white py-2.5 rounded-xl font-bold shadow active:scale-95 transition flex flex-col items-center justify-center">
-          <span class="text-xs">{{ submitting ? 'Sending to Kitchen / 正在出单...' : 'Confirm Order / 确认下单' }}</span>
-          <span class="text-[9px] opacity-75 font-normal">确认并同步到 POS 系统</span>
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const { createApp, ref, computed, onMounted } = Vue;
-    createApp({
-      setup() {
-        const tableNumber = ref('01');
-        const showModal = ref(false);
-        const payMethod = ref('CASH');
-        const orderNote = ref('');
-        const submitting = ref(false);
-        const cart = ref({});
-        const activeCat = ref('Espresso');
-
-        const categories = [
-          { en: 'Espresso', zh: '意式咖啡' },
-          { en: 'Specialty', zh: '特调咖啡' },
-          { en: 'Hand Brew', zh: '手冲咖啡' },
-          { en: 'Drinks & Tea', zh: '饮品茶饮' },
-          { en: 'Bakery & Dessert', zh: '烘焙甜点' }
-        ];
-        
-        const menuItems = ref([
-          // Espresso Coffee
-          { id: 'c1', name: 'Espresso / 意式浓缩', cat: 'Espresso', price: 7000, desc: 'Rich and authentic double shot' },
-          { id: 'c2', name: 'Light Americano / 轻美式', cat: 'Espresso', price: 7500, desc: 'Light and refreshing roast' },
-          { id: 'c3', name: 'Dark Americano / 深美式', cat: 'Espresso', price: 7500, desc: 'Bold nutty notes and rich crema' },
-          { id: 'c4', name: 'Latte / 拿铁', cat: 'Espresso', price: 8000, desc: 'Smooth steamed milk with espresso' },
-          { id: 'c5', name: 'Cappuccino / 卡布奇诺', cat: 'Espresso', price: 8000, desc: 'Classic velvety dense foam' },
-          { id: 'c6', name: 'Flat White / 澳白', cat: 'Espresso', price: 8000, desc: 'Strong espresso flavor with microfoam' },
-          { id: 'c7', name: 'Caramel Macchiato / 焦糖玛奇朵', cat: 'Espresso', price: 8000, desc: 'Sweet layered vanilla caramel flavor' },
-          { id: 'c8', name: 'Mocha / 摩卡咖啡', cat: 'Espresso', price: 8000, desc: 'Rich chocolate blended with espresso' },
-          { id: 'c9', name: 'Apple Americano / 苹果美式', cat: 'Espresso', price: 8000, desc: 'Refreshing crisp apple flavor' },
-          { id: 'c10', name: 'Orange Americano / 香橙美式', cat: 'Espresso', price: 8000, desc: 'Fresh citrus tang with dark espresso' },
-          { id: 'c11', name: 'Lemon Americano / 柠檬冰咖啡', cat: 'Espresso', price: 8000, desc: 'Iced invigorating lemon infusion' },
-          { id: 'c12', name: 'Sicily Coffee / 西西里', cat: 'Espresso', price: 8000, desc: 'Mediterranean iced citrus blend' },
-          { id: 'c13', name: 'Coconut Latte / 生椰拿铁', cat: 'Espresso', price: 8000, desc: 'Fresh coconut milk with fragrant coffee' },
-          { id: 'c14', name: 'Wangzai Latte / 旺仔拿铁', cat: 'Espresso', price: 8500, desc: 'Sweet Wangzai milk special latte' },
-          { id: 'c15', name: 'Passion Americano / 百香美式', cat: 'Espresso', price: 8000, desc: 'Tropical passion fruit and espresso' },
-          { id: 'c16', name: 'Power Americano / 红牛美式', cat: 'Espresso', price: 8000, desc: 'Red Bull energy collision' },
-
-          // Specialty Coffee
-          { id: 'sc1', name: 'Spanish Latte / 西班牙拿铁', cat: 'Specialty', price: 8000, desc: 'Sweet condensed milk layered latte' },
-          { id: 'sc2', name: 'Tiramisu Latte / 提拉米苏拿铁', cat: 'Specialty', price: 8500, desc: 'Rich dessert-style cocoa coffee' },
-          { id: 'sc3', name: 'Velvet Latte / 丝绒拿铁', cat: 'Specialty', price: 8500, desc: 'Silky smooth balanced texture' },
-          { id: 'sc4', name: 'Merry Americano / 微醺冰美式', cat: 'Specialty', price: 8500, desc: 'Malty aroma chilled americano' },
-          { id: 'sc5', name: 'Kahlua Coffee / 利口酒冰爽咖啡', cat: 'Specialty', price: 8500, desc: 'Coffee liqueur signature special' },
-          { id: 'sc6', name: 'Cold Brew / 冷萃咖啡', cat: 'Specialty', price: 9000, desc: '12-hour slow extraction, naturally sweet' },
-          { id: 'sc7', name: 'Ice Drip / 冰滴咖啡', cat: 'Specialty', price: 9000, desc: 'Slow fermented drop by drop' },
-
-          // Hand Brew Coffee
-          { id: 'hb1', name: 'Honduras Sherry / 洪都拉斯 雪利酒', cat: 'Hand Brew', price: 12000, desc: 'Sherry Barrel Process | Wine aroma, berries, dark chocolate' },
-          { id: 'hb2', name: 'Pyin Oo Lwin Natural / 缅甸 眉苗 日晒', cat: 'Hand Brew', price: 9000, desc: 'Natural Process | Tropical fruits, pronounced sweetness, full body' },
-          { id: 'hb3', name: 'Pyin Oo Lwin / Ywangan Washed / 眉苗/耶岸 水洗', cat: 'Hand Brew', price: 9000, desc: 'Washed Process | Citrus, floral, tea-like, clean & crisp' },
-
-          // Drinks & Tea
-          { id: 'd0', name: 'Mineral Water / 矿泉水', cat: 'Drinks & Tea', price: 1000, desc: 'Bottled drinking water' },
-          { id: 'd1', name: 'Fresh Milk / 牛奶', cat: 'Drinks & Tea', price: 7500, desc: 'Warm or iced fresh milk' },
-          { id: 'd2', name: 'Orange Juice / 橙汁', cat: 'Drinks & Tea', price: 7500, desc: 'Fresh and fruity' },
-          { id: 'd3', name: 'Watermelon Juice / 西瓜汁', cat: 'Drinks & Tea', price: 7500, desc: 'Cooling fresh watermelon' },
-          { id: 'd4', name: 'Lemon Juice / 柠檬汁', cat: 'Drinks & Tea', price: 7500, desc: 'Zesty and tangy' },
-          { id: 'd5', name: 'Apple Juice / 苹果汁', cat: 'Drinks & Tea', price: 7500, desc: 'Crisp and sweet' },
-          { id: 'd6', name: 'Strawberry Milk / 草莓奶', cat: 'Drinks & Tea', price: 8500, desc: 'Sweet strawberry with milk' },
-          { id: 'd7', name: 'Matcha Latte / 抹茶奶', cat: 'Drinks & Tea', price: 8000, desc: 'Japanese matcha with fresh milk' },
-          { id: 'd8', name: 'Taro Latte / 紫薯奶', cat: 'Drinks & Tea', price: 8000, desc: 'Creamy purple yam flavor' },
-          { id: 'd9', name: 'Thai Milk Tea / 泰式奶茶', cat: 'Drinks & Tea', price: 8000, desc: 'Authentic rich Thai tea' },
-          { id: 'd10', name: 'Chocolate / 巧克力', cat: 'Drinks & Tea', price: 8000, desc: 'Rich decadent cocoa' },
-          { id: 'd11', name: 'Blue Ocean / 蓝色海洋', cat: 'Drinks & Tea', price: 8000, desc: 'Sparkling blue soda signature' },
-          { id: 'd12', name: 'Lemon Iced Tea / 柠檬冰红茶', cat: 'Drinks & Tea', price: 7500, desc: 'Black tea with fresh lemon slices' },
-          { id: 'd13', name: 'Passion Juice / 百香果汁', cat: 'Drinks & Tea', price: 7500, desc: 'Tropical aromatic sweet passion fruit' },
-          { id: 'd14', name: 'Passion Soda / 日落百香果', cat: 'Drinks & Tea', price: 8000, desc: 'Fizzy refreshing passion soda' },
-
-          // Bakery & Dessert
-          { id: 'b1', name: 'Croissant / 可颂', cat: 'Bakery & Dessert', price: 5000, desc: 'Flaky golden buttery layers' },
-          { id: 'b2', name: 'Garlic Bread / 韩式蒜香面包', cat: 'Bakery & Dessert', price: 7500, desc: 'Korean cream cheese garlic bread' },
-          { id: 'b3', name: 'Lava Toast / 岩烧厚切', cat: 'Bakery & Dessert', price: 7000, desc: 'Toasted cheese crust thick bread' },
-          { id: 'b4', name: 'Mario Bread / 马里奥面包', cat: 'Bakery & Dessert', price: 5000, desc: 'Soft and sweet traditional treat' },
-          { id: 'b5', name: 'Chocolate Bun / 巧克力面包', cat: 'Bakery & Dessert', price: 5000, desc: 'Rich melted chocolate filling' },
-          { id: 'b6', name: 'Tiramisu / 提拉米苏', cat: 'Bakery & Dessert', price: 12000, desc: 'Classic Italian artisan dessert' },
-          { id: 'b7', name: 'Basque Cheesecake / 原味巴斯克', cat: 'Bakery & Dessert', price: 10000, desc: 'Caramelized burnt top, creamy center' },
-          { id: 'b8', name: 'Chocolate Basque / 巧克力巴斯克', cat: 'Bakery & Dessert', price: 10000, desc: 'Dark chocolate burnt cheese cake' },
-          { id: 'b9', name: 'Blueberry Crepe / 蓝莓千层', cat: 'Bakery & Dessert', price: 10000, desc: 'Delicate layers with wild blueberry cream' },
-          { id: 'b10', name: 'Cheese Mille Crepe / 起司千层', cat: 'Bakery & Dessert', price: 10000, desc: 'Light savory cheese cream crepe cake' }
-        ]);
-
-        onMounted(() => {
-          const params = new URLSearchParams(window.location.search);
-          if (params.get('table')) tableNumber.value = params.get('table');
-        });
-
-        const filteredItems = computed(() => menuItems.value.filter(i => i.cat === activeCat.value));
-        const getItem = (id) => menuItems.value.find(i => i.id === id);
-        const getQty = (id) => cart.value[id] || 0;
-        const incQty = (item) => cart.value[item.id] = (cart.value[item.id] || 0) + 1;
-        const decQty = (item) => {
-          if (cart.value[item.id] > 1) cart.value[item.id]--;
-          else delete cart.value[item.id];
-        };
-        const totalQty = computed(() => Object.values(cart.value).reduce((a, b) => a + b, 0));
-        const totalAmount = computed(() => Object.entries(cart.value).reduce((s, [id, q]) => s + (getItem(id)?.price || 0) * q, 0));
-
-        // 真实提交订单至 Loyverse
-        const submitOrder = async () => {
-          submitting.value = true;
-          
-          const orderItems = Object.entries(cart.value).map(([id, qty]) => {
-            const item = getItem(id);
-            return {
-              name: item.name,
-              qty: qty,
-              price: item.price
-            };
-          });
-
-          const payload = {
-            table: tableNumber.value,
-            payment: payMethod.value,
-            note: orderNote.value,
-            items: orderItems,
-            totalAmount: totalAmount.value
-          };
-
-          try {
-            const res = await fetch('https://hana-coffee-menu.vercel.app/api/order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(payload)
-            });
-            const result = await res.json();
-
-            if (result.success) {
-              alert(`Order Placed Successfully! / 下单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter / 吧台现金' : 'KBZPay Completed / 已付'}\n\nOrder has been sent to POS!`);
-              cart.value = {};
-              showModal.value = false;
-            } else {
-              alert('Order Submission Notice: ' + (result.error || 'Server error, please inform the counter.'));
-            }
-          } catch (e) {
-            alert('Order sent! Please notify the barista / 下单已提交，请到吧台核对');
-            cart.value = {};
-            showModal.value = false;
-          } finally {
-            submitting.value = false;
-          }
-        };
-
-        return {
-          tableNumber, showModal, payMethod, orderNote, submitting, cart,
-          activeCat, categories, filteredItems, getItem, getQty, incQty, decQty,
-          totalQty, totalAmount, submitOrder
-        };
-      }
-    }).mount('#app');
-  </script>
-</body>
-</html>
+    const resData = await response.json();
+    return res.status(200).json({ success: true, data: resData });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+}
