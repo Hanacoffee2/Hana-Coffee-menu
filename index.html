@@ -56,19 +56,23 @@
         <div class="text-base font-extrabold text-amber-700">{{ totalAmount.toLocaleString() }} <span class="text-xs font-normal text-stone-500">MMK</span></div>
       </div>
       <button :disabled="totalQty === 0" @click="showModal = true"
-              class="bg-stone-900 disabled:bg-stone-300 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition">
-        Checkout ({{ totalQty }})
+              class="bg-stone-900 disabled:bg-stone-300 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition flex flex-col items-center">
+        <span>Checkout ({{ totalQty }})</span>
+        <span class="text-[9px] opacity-75 font-normal">去结算</span>
       </button>
     </footer>
 
-    <!-- 结算弹窗 -->
+    <!-- 结算弹窗 (全面英中双语) -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 z-30 flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+        
+        <!-- 弹窗顶部 -->
         <div class="flex justify-between items-center border-b pb-3">
           <div>
-            <h3 class="font-bold text-sm text-stone-800">Order Summary / 订单详情</h3>
-            <div class="flex items-center space-x-1.5 mt-1">
-              <span class="text-[11px] text-stone-500">Table / 桌号:</span>
+            <h3 class="font-bold text-sm text-stone-800">Order Summary</h3>
+            <p class="text-[10px] text-stone-400">订单详情核对</p>
+            <div class="flex items-center space-x-1.5 mt-1.5">
+              <span class="text-[11px] text-stone-500 font-medium">Table / 桌号:</span>
               <select v-model="tableNumber" class="text-xs font-bold text-amber-700 bg-stone-100 border border-stone-200 rounded px-1.5 py-0.5 outline-none">
                 <option value="01">Table 01 (1号桌)</option>
                 <option value="02">Table 02 (2号桌)</option>
@@ -94,40 +98,51 @@
 
         <!-- 结算方式选择 -->
         <div class="space-y-2 pt-1">
-          <div class="text-xs font-bold text-stone-700">Payment Method / 结算方式</div>
+          <div>
+            <div class="text-xs font-bold text-stone-800">Payment Method</div>
+            <div class="text-[10px] text-stone-400">选择结算方式</div>
+          </div>
           <div class="grid grid-cols-2 gap-2">
             <button @click="payMethod = 'CASH'" :class="payMethod === 'CASH' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2 rounded-xl text-center text-xs transition">
-              💵 Cash at Counter<br><span class="text-[10px] text-stone-400 font-normal">吧台现金结账</span>
+                    class="border p-2 rounded-xl text-center text-xs transition flex flex-col items-center justify-center">
+              <span>💵 Cash at Counter</span>
+              <span class="text-[10px] text-stone-400 font-normal mt-0.5">到吧台现金结账</span>
             </button>
             <button @click="payMethod = 'QR'" :class="payMethod === 'QR' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2 rounded-xl text-center text-xs transition">
-              📱 KBZPay QR<br><span class="text-[10px] text-stone-400 font-normal">扫码/转账支付</span>
+                    class="border p-2 rounded-xl text-center text-xs transition flex flex-col items-center justify-center">
+              <span>📱 KBZPay QR</span>
+              <span class="text-[10px] text-stone-400 font-normal mt-0.5">扫码转账支付</span>
             </button>
           </div>
         </div>
 
-        <!-- KBZPay 收款码真实展示 -->
+        <!-- KBZPay 收款码展示 -->
         <div v-if="payMethod === 'QR'" class="bg-sky-50/70 border border-sky-100 p-3 rounded-2xl text-center space-y-2">
-          <div class="text-[11px] font-bold text-sky-900">KBZPay 扫码付款</div>
+          <div>
+            <div class="text-[11px] font-bold text-sky-900">Scan QR via KBZPay</div>
+            <div class="text-[10px] text-sky-700">使用 KBZPay 扫码付款</div>
+          </div>
           
           <div class="w-48 mx-auto bg-white p-2 rounded-xl shadow-sm border border-stone-100">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021130540016A0000007270401120112097980502200214DAW%20KYANG%20LANG%20CHIN52045999531041045802MM5918DAW%20KYANG%20LANG%20CHIN6006YANGON62180114097980502200216304E8A5" alt="KBZPay QR" class="w-full h-auto rounded-lg">
           </div>
 
           <div class="text-[10px] text-stone-500 leading-tight">
-            收款账户: <span class="font-bold text-stone-700">DAW KYANG LANG CHIN</span><br>
-            尾号: <span class="font-bold text-stone-700">******0220</span>
+            Account / 账户: <span class="font-bold text-stone-700">DAW KYANG LANG CHIN</span><br>
+            Phone / 尾号: <span class="font-bold text-stone-700">******0220</span>
           </div>
-          <p class="text-[10px] text-amber-700 font-medium">请保存或截图二维码打开 KBZPay 完成付款，随后点击下方确认下单</p>
+          <p class="text-[10px] text-amber-700 font-medium">Please screenshot/save QR to pay, then click confirm below.<br><span class="text-[9px] text-stone-400">截图或长按保存二维码付款，随后点击确认</span></p>
         </div>
 
-        <!-- 备注 -->
-        <input v-model="orderNote" placeholder="Notes (e.g. less sugar, iced, hot) / 备注需求" class="w-full text-xs border border-stone-200 rounded-xl p-2.5 outline-none focus:border-stone-800">
+        <!-- 备注需求 -->
+        <div class="space-y-1">
+          <input v-model="orderNote" placeholder="Notes (e.g. less sugar, iced, hot) / 备注特殊需求" class="w-full text-xs border border-stone-200 rounded-xl p-2.5 outline-none focus:border-stone-800">
+        </div>
 
         <!-- 提交按钮 -->
-        <button @click="submitOrder" :disabled="submitting" class="w-full bg-stone-900 text-white text-xs py-3 rounded-xl font-bold shadow active:scale-95 transition">
-          {{ submitting ? 'Submitting...' : 'Confirm Order / 确认下单' }}
+        <button @click="submitOrder" :disabled="submitting" class="w-full bg-stone-900 text-white py-2.5 rounded-xl font-bold shadow active:scale-95 transition flex flex-col items-center justify-center">
+          <span class="text-xs">{{ submitting ? 'Submitting...' : 'Confirm Order' }}</span>
+          <span class="text-[9px] opacity-75 font-normal">确认下单并提交</span>
         </button>
       </div>
     </div>
@@ -235,7 +250,7 @@
         const submitOrder = () => {
           submitting.value = true;
           setTimeout(() => {
-            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter' : 'KBZPay Completed'}`);
+            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter / 吧台现金' : 'KBZPay Completed / KBZPay支付'}`);
             cart.value = {};
             showModal.value = false;
             submitting.value = false;
