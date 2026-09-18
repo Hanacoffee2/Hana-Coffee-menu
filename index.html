@@ -23,7 +23,7 @@
       <span class="text-xs bg-amber-600/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full">Open / 营业中</span>
     </header>
 
-    <!-- 分类横向滚动栏 (英文在上，中文在下) -->
+    <!-- 分类横向滚动栏 -->
     <div class="flex overflow-x-auto p-2.5 space-x-2 bg-white border-b sticky top-[68px] z-10 no-scrollbar">
       <button v-for="cat in categories" :key="cat.en" @click="activeCat = cat.en"
               :class="activeCat === cat.en ? 'bg-stone-900 text-white font-medium shadow-sm' : 'bg-stone-100 text-stone-600'"
@@ -62,11 +62,9 @@
       </button>
     </footer>
 
-    <!-- 结算弹窗 (全面英中双语) -->
+    <!-- 结算弹窗 -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 z-30 flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
-        
-        <!-- 弹窗顶部 -->
         <div class="flex justify-between items-center border-b pb-3">
           <div>
             <h3 class="font-bold text-sm text-stone-800">Order Summary</h3>
@@ -141,8 +139,8 @@
 
         <!-- 提交按钮 -->
         <button @click="submitOrder" :disabled="submitting" class="w-full bg-stone-900 text-white py-2.5 rounded-xl font-bold shadow active:scale-95 transition flex flex-col items-center justify-center">
-          <span class="text-xs">{{ submitting ? 'Submitting...' : 'Confirm Order' }}</span>
-          <span class="text-[9px] opacity-75 font-normal">确认下单并提交</span>
+          <span class="text-xs">{{ submitting ? 'Sending to Kitchen / 正在出单...' : 'Confirm Order / 确认下单' }}</span>
+          <span class="text-[9px] opacity-75 font-normal">确认并同步到 POS 系统</span>
         </button>
       </div>
     </div>
@@ -169,7 +167,6 @@
         ];
         
         const menuItems = ref([
-          // Espresso Coffee
           { id: 'c1', name: 'Espresso / 意式浓缩', cat: 'Espresso', price: 7000, desc: 'Rich and authentic double shot' },
           { id: 'c2', name: 'Light Americano / 轻美式', cat: 'Espresso', price: 7500, desc: 'Light and refreshing roast' },
           { id: 'c3', name: 'Dark Americano / 深美式', cat: 'Espresso', price: 7500, desc: 'Bold nutty notes and rich crema' },
@@ -187,7 +184,6 @@
           { id: 'c15', name: 'Passion Americano / 百香美式', cat: 'Espresso', price: 8000, desc: 'Tropical passion fruit and espresso' },
           { id: 'c16', name: 'Power Americano / 红牛美式', cat: 'Espresso', price: 8000, desc: 'Red Bull energy collision' },
 
-          // Specialty Coffee
           { id: 'sc1', name: 'Spanish Latte / 西班牙拿铁', cat: 'Specialty', price: 8000, desc: 'Sweet condensed milk layered latte' },
           { id: 'sc2', name: 'Tiramisu Latte / 提拉米苏拿铁', cat: 'Specialty', price: 8500, desc: 'Rich dessert-style cocoa coffee' },
           { id: 'sc3', name: 'Velvet Latte / 丝绒拿铁', cat: 'Specialty', price: 8500, desc: 'Silky smooth balanced texture' },
@@ -196,12 +192,10 @@
           { id: 'sc6', name: 'Cold Brew / 冷萃咖啡', cat: 'Specialty', price: 9000, desc: '12-hour slow extraction, naturally sweet' },
           { id: 'sc7', name: 'Ice Drip / 冰滴咖啡', cat: 'Specialty', price: 9000, desc: 'Slow fermented drop by drop' },
 
-          // Hand Brew Coffee
           { id: 'hb1', name: 'Honduras Sherry / 洪都拉斯 雪利酒', cat: 'Hand Brew', price: 12000, desc: 'Sherry Barrel Process | Wine aroma, berries, dark chocolate' },
           { id: 'hb2', name: 'Pyin Oo Lwin Natural / 缅甸 眉苗 日晒', cat: 'Hand Brew', price: 9000, desc: 'Natural Process | Tropical fruits, pronounced sweetness, full body' },
-          { id: 'hb3', name: 'Pyin Oo Lwin / Ywangan Washed / 眉苗/耶岸 水洗', cat: 'Hand Brew', price: 9000, desc: 'Washed Process | Citrus, floral, tea-like, clean & crisp' },
+          { id: 'hb3', name: 'Pyin Oo Lwin / Ywangan Washed / 眉苗/耶岸 水洗', cat: 'Hand Brew', price: 9000, desc: 'Washed Process | Citrus, floral, clean & crisp' },
 
-          // Drinks & Tea
           { id: 'd0', name: 'Mineral Water / 矿泉水', cat: 'Drinks & Tea', price: 1000, desc: 'Bottled drinking water' },
           { id: 'd1', name: 'Fresh Milk / 牛奶', cat: 'Drinks & Tea', price: 7500, desc: 'Warm or iced fresh milk' },
           { id: 'd2', name: 'Orange Juice / 橙汁', cat: 'Drinks & Tea', price: 7500, desc: 'Fresh and fruity' },
@@ -218,7 +212,6 @@
           { id: 'd13', name: 'Passion Juice / 百香果汁', cat: 'Drinks & Tea', price: 7500, desc: 'Tropical aromatic sweet passion fruit' },
           { id: 'd14', name: 'Passion Soda / 日落百香果', cat: 'Drinks & Tea', price: 8000, desc: 'Fizzy refreshing passion soda' },
 
-          // Bakery & Dessert
           { id: 'b1', name: 'Croissant / 可颂', cat: 'Bakery & Dessert', price: 5000, desc: 'Flaky golden buttery layers' },
           { id: 'b2', name: 'Garlic Bread / 韩式蒜香面包', cat: 'Bakery & Dessert', price: 7500, desc: 'Korean cream cheese garlic bread' },
           { id: 'b3', name: 'Lava Toast / 岩烧厚切', cat: 'Bakery & Dessert', price: 7000, desc: 'Toasted cheese crust thick bread' },
@@ -247,14 +240,47 @@
         const totalQty = computed(() => Object.values(cart.value).reduce((a, b) => a + b, 0));
         const totalAmount = computed(() => Object.entries(cart.value).reduce((s, [id, q]) => s + (getItem(id)?.price || 0) * q, 0));
 
-        const submitOrder = () => {
+        // 提交订单至 Cloudflare Worker
+        const submitOrder = async () => {
           submitting.value = true;
-          setTimeout(() => {
-            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter / 吧台现金' : 'KBZPay Completed / KBZPay支付'}`);
-            cart.value = {};
-            showModal.value = false;
+          
+          const orderItems = Object.entries(cart.value).map(([id, qty]) => {
+            const item = getItem(id);
+            return {
+              name: item.name,
+              qty: qty,
+              price: item.price
+            };
+          });
+
+          const payload = {
+            table: tableNumber.value,
+            payment: payMethod.value,
+            note: orderNote.value,
+            items: orderItems,
+            totalAmount: totalAmount.value
+          };
+
+          try {
+            const res = await fetch('https://polished-shape-e7fa.yuanfu20020913.workers.dev', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const result = await res.json();
+
+            if (result.success) {
+              alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter / 吧台现金' : 'KBZPay Completed / 已付'}\n\n已成功推送到 POS 系统！`);
+              cart.value = {};
+              showModal.value = false;
+            } else {
+              alert('POS Notice: ' + JSON.stringify(result.data || result.error));
+            }
+          } catch (e) {
+            alert('Order submission error: ' + e.message);
+          } finally {
             submitting.value = false;
-          }, 600);
+          }
         };
 
         return {
