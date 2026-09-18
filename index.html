@@ -63,15 +63,30 @@
 
     <!-- 结算弹窗 -->
     <div v-if="showModal" class="fixed inset-0 bg-black/60 z-30 flex items-end justify-center">
-      <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b pb-3">
-          <h3 class="font-bold text-sm text-stone-800">Order Summary / 订单详情 (Table: {{ tableNumber }})</h3>
-          <button @click="showModal = false" class="text-stone-400 text-lg font-bold">✕</button>
+          <div>
+            <h3 class="font-bold text-sm text-stone-800">Order Summary / 订单详情</h3>
+            <div class="flex items-center space-x-1.5 mt-1">
+              <span class="text-[11px] text-stone-500">Table / 桌号:</span>
+              <select v-model="tableNumber" class="text-xs font-bold text-amber-700 bg-stone-100 border border-stone-200 rounded px-1.5 py-0.5 outline-none">
+                <option value="01">Table 01 (1号桌)</option>
+                <option value="02">Table 02 (2号桌)</option>
+                <option value="03">Table 03 (3号桌)</option>
+                <option value="04">Table 04 (4号桌)</option>
+                <option value="05">Table 05 (5号桌)</option>
+                <option value="06">Table 06 (6号桌)</option>
+                <option value="07">Table 07 (7号桌)</option>
+                <option value="Bar">Bar (吧台)</option>
+              </select>
+            </div>
+          </div>
+          <button @click="showModal = false" class="text-stone-400 text-xl font-bold p-1">✕</button>
         </div>
 
         <!-- 点单清单 -->
-        <div class="space-y-1 text-xs text-stone-600 max-h-36 overflow-y-auto pr-1">
-          <div v-for="(qty, id) in cart" :key="id" class="flex justify-between py-1.5 border-b border-dashed border-stone-100">
+        <div class="space-y-1 text-xs text-stone-600 max-h-32 overflow-y-auto pr-1">
+          <div v-for="(qty, id) in cart" :key="id" class="flex justify-between py-1 border-b border-dashed border-stone-100">
             <span>{{ getItem(id).name }} × {{ qty }}</span>
             <span class="font-semibold text-stone-800">{{ (getItem(id).price * qty).toLocaleString() }} MMK</span>
           </div>
@@ -87,18 +102,24 @@
             </button>
             <button @click="payMethod = 'QR'" :class="payMethod === 'QR' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
                     class="border p-2 rounded-xl text-center text-xs transition">
-              📱 QR Pay / Transfer<br><span class="text-[10px] text-stone-400 font-normal">KBZPay / WavePay</span>
+              📱 KBZPay QR<br><span class="text-[10px] text-stone-400 font-normal">扫码/转账支付</span>
             </button>
           </div>
         </div>
 
-        <!-- 收款码展示 -->
-        <div v-if="payMethod === 'QR'" class="bg-stone-50 p-3 rounded-2xl text-center space-y-1.5 border border-stone-100">
-          <p class="text-[11px] text-stone-600">Please scan to pay / 请扫码支付：</p>
-          <div class="w-36 h-36 mx-auto bg-white p-2 rounded-xl border flex items-center justify-center text-stone-300 text-[10px]">
-            [ Payment QR Code ]
+        <!-- KBZPay 收款码真实展示 -->
+        <div v-if="payMethod === 'QR'" class="bg-sky-50/70 border border-sky-100 p-3 rounded-2xl text-center space-y-2">
+          <div class="text-[11px] font-bold text-sky-900">KBZPay 扫码付款</div>
+          
+          <div class="w-48 mx-auto bg-white p-2 rounded-xl shadow-sm border border-stone-100">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=00020101021130540016A0000007270401120112097980502200214DAW%20KYANG%20LANG%20CHIN52045999531041045802MM5918DAW%20KYANG%20LANG%20CHIN6006YANGON62180114097980502200216304E8A5" alt="KBZPay QR" class="w-full h-auto rounded-lg">
           </div>
-          <p class="text-[10px] text-amber-600 font-medium">After payment, click button below to submit</p>
+
+          <div class="text-[10px] text-stone-500 leading-tight">
+            收款账户: <span class="font-bold text-stone-700">DAW KYANG LANG CHIN</span><br>
+            尾号: <span class="font-bold text-stone-700">******0220</span>
+          </div>
+          <p class="text-[10px] text-amber-700 font-medium">请保存或截图二维码打开 KBZPay 完成付款，随后点击下方确认下单</p>
         </div>
 
         <!-- 备注 -->
@@ -124,7 +145,6 @@
         const cart = ref({});
         const activeCat = ref('Espresso');
 
-        // 双语分类定义：英文在上，中文在下
         const categories = [
           { en: 'Espresso', zh: '意式咖啡' },
           { en: 'Specialty', zh: '特调咖啡' },
@@ -167,6 +187,7 @@
           { id: 'hb3', name: 'Pyin Oo Lwin / Ywangan Washed / 眉苗/耶岸 水洗', cat: 'Hand Brew', price: 9000, desc: 'Washed Process | Citrus, floral, tea-like, clean & crisp' },
 
           // Drinks & Tea
+          { id: 'd0', name: 'Mineral Water / 矿泉水', cat: 'Drinks & Tea', price: 1000, desc: 'Bottled drinking water' },
           { id: 'd1', name: 'Fresh Milk / 牛奶', cat: 'Drinks & Tea', price: 7500, desc: 'Warm or iced fresh milk' },
           { id: 'd2', name: 'Orange Juice / 橙汁', cat: 'Drinks & Tea', price: 7500, desc: 'Fresh and fruity' },
           { id: 'd3', name: 'Watermelon Juice / 西瓜汁', cat: 'Drinks & Tea', price: 7500, desc: 'Cooling fresh watermelon' },
@@ -214,7 +235,7 @@
         const submitOrder = () => {
           submitting.value = true;
           setTimeout(() => {
-            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter' : 'QR Payment'}`);
+            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter' : 'KBZPay Completed'}`);
             cart.value = {};
             showModal.value = false;
             submitting.value = false;
