@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>哈纳咖啡馆 Hana Coffee - 扫码点单</title>
+  <title>Hana Coffee - Order Online</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <style>
@@ -17,18 +17,19 @@
     <!-- 顶部店招与桌号 -->
     <header class="bg-stone-900 text-white p-4 sticky top-0 z-20 shadow flex justify-between items-center">
       <div>
-        <h1 class="font-bold text-lg tracking-wide">哈纳咖啡馆 Hana Coffee</h1>
-        <p class="text-xs text-stone-400">桌号 / Table: <span class="text-amber-400 font-bold text-sm">{{ tableNumber }}</span></p>
+        <h1 class="font-bold text-lg tracking-wide">Hana Coffee</h1>
+        <p class="text-xs text-stone-400">Table / 桌号: <span class="text-amber-400 font-bold text-sm">{{ tableNumber }}</span></p>
       </div>
-      <span class="text-xs bg-amber-600/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full">点单中</span>
+      <span class="text-xs bg-amber-600/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-full">Open / 营业中</span>
     </header>
 
-    <!-- 分类横向滚动栏 -->
-    <div class="flex overflow-x-auto p-3 space-x-2 bg-white border-b sticky top-[68px] z-10 no-scrollbar">
-      <button v-for="cat in categories" :key="cat" @click="activeCat = cat"
-              :class="activeCat === cat ? 'bg-stone-900 text-white font-medium shadow-sm' : 'bg-stone-100 text-stone-600'"
-              class="px-3.5 py-1.5 rounded-full text-xs whitespace-nowrap transition">
-        {{ cat }}
+    <!-- 分类横向滚动栏 (英文在上，中文在下) -->
+    <div class="flex overflow-x-auto p-2.5 space-x-2 bg-white border-b sticky top-[68px] z-10 no-scrollbar">
+      <button v-for="cat in categories" :key="cat.en" @click="activeCat = cat.en"
+              :class="activeCat === cat.en ? 'bg-stone-900 text-white font-medium shadow-sm' : 'bg-stone-100 text-stone-600'"
+              class="px-3 py-1.5 rounded-xl text-center shrink-0 transition flex flex-col items-center justify-center">
+        <span class="text-xs font-semibold leading-none">{{ cat.en }}</span>
+        <span class="text-[10px] opacity-75 mt-0.5 leading-none">{{ cat.zh }}</span>
       </button>
     </div>
 
@@ -51,12 +52,12 @@
     <!-- 底部结算栏 -->
     <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/95 backdrop-blur border-t p-3 flex justify-between items-center z-20 shadow-lg">
       <div>
-        <div class="text-[10px] text-stone-400">总计 / Total</div>
+        <div class="text-[10px] text-stone-400">Total / 总计</div>
         <div class="text-base font-extrabold text-amber-700">{{ totalAmount.toLocaleString() }} <span class="text-xs font-normal text-stone-500">MMK</span></div>
       </div>
       <button :disabled="totalQty === 0" @click="showModal = true"
               class="bg-stone-900 disabled:bg-stone-300 text-white text-xs px-5 py-2.5 rounded-xl font-bold shadow-sm active:scale-95 transition">
-        选好了 ({{ totalQty }})
+        Checkout ({{ totalQty }})
       </button>
     </footer>
 
@@ -64,7 +65,7 @@
     <div v-if="showModal" class="fixed inset-0 bg-black/60 z-30 flex items-end justify-center">
       <div class="bg-white w-full max-w-md rounded-t-3xl p-5 space-y-4 max-h-[85vh] overflow-y-auto">
         <div class="flex justify-between items-center border-b pb-3">
-          <h3 class="font-bold text-sm text-stone-800">核对订单 (桌号: {{ tableNumber }})</h3>
+          <h3 class="font-bold text-sm text-stone-800">Order Summary / 订单详情 (Table: {{ tableNumber }})</h3>
           <button @click="showModal = false" class="text-stone-400 text-lg font-bold">✕</button>
         </div>
 
@@ -78,34 +79,34 @@
 
         <!-- 结算方式选择 -->
         <div class="space-y-2 pt-1">
-          <div class="text-xs font-bold text-stone-700">结算方式 / Payment</div>
+          <div class="text-xs font-bold text-stone-700">Payment Method / 结算方式</div>
           <div class="grid grid-cols-2 gap-2">
             <button @click="payMethod = 'CASH'" :class="payMethod === 'CASH' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2.5 rounded-xl text-center text-xs transition">
-              💵 吧台现金结账<br><span class="text-[10px] text-stone-400 font-normal">离店/出餐时付款</span>
+                    class="border p-2 rounded-xl text-center text-xs transition">
+              💵 Cash at Counter<br><span class="text-[10px] text-stone-400 font-normal">吧台现金结账</span>
             </button>
             <button @click="payMethod = 'QR'" :class="payMethod === 'QR' ? 'border-amber-600 bg-amber-50 text-amber-800 font-bold' : 'border-stone-200 text-stone-600'"
-                    class="border p-2.5 rounded-xl text-center text-xs transition">
-              📱 扫码支付<br><span class="text-[10px] text-stone-400 font-normal">KBZPay / Wave</span>
+                    class="border p-2 rounded-xl text-center text-xs transition">
+              📱 QR Pay / Transfer<br><span class="text-[10px] text-stone-400 font-normal">KBZPay / WavePay</span>
             </button>
           </div>
         </div>
 
         <!-- 收款码展示 -->
         <div v-if="payMethod === 'QR'" class="bg-stone-50 p-3 rounded-2xl text-center space-y-1.5 border border-stone-100">
-          <p class="text-[11px] text-stone-600">请使用手机银行/钱包扫码支付：</p>
+          <p class="text-[11px] text-stone-600">Please scan to pay / 请扫码支付：</p>
           <div class="w-36 h-36 mx-auto bg-white p-2 rounded-xl border flex items-center justify-center text-stone-300 text-[10px]">
-            [ 此处放置收款码 ]
+            [ Payment QR Code ]
           </div>
-          <p class="text-[10px] text-amber-600 font-medium">付款后，直接点击下方提交即可完成挂单</p>
+          <p class="text-[10px] text-amber-600 font-medium">After payment, click button below to submit</p>
         </div>
 
         <!-- 备注 -->
-        <input v-model="orderNote" placeholder="如有特殊要求请备注（如：少糖、去冰、全热等）" class="w-full text-xs border border-stone-200 rounded-xl p-2.5 outline-none focus:border-stone-800">
+        <input v-model="orderNote" placeholder="Notes (e.g. less sugar, iced, hot) / 备注需求" class="w-full text-xs border border-stone-200 rounded-xl p-2.5 outline-none focus:border-stone-800">
 
         <!-- 提交按钮 -->
         <button @click="submitOrder" :disabled="submitting" class="w-full bg-stone-900 text-white text-xs py-3 rounded-xl font-bold shadow active:scale-95 transition">
-          {{ submitting ? '提交中...' : '确认并发送到吧台' }}
+          {{ submitting ? 'Submitting...' : 'Confirm Order / 确认下单' }}
         </button>
       </div>
     </div>
@@ -121,70 +122,77 @@
         const orderNote = ref('');
         const submitting = ref(false);
         const cart = ref({});
-        const activeCat = ref('意式咖啡');
+        const activeCat = ref('Espresso');
 
-        const categories = ['意式咖啡', '特调咖啡', '手冲咖啡', '饮品茶饮', '烘焙甜点'];
+        // 双语分类定义：英文在上，中文在下
+        const categories = [
+          { en: 'Espresso', zh: '意式咖啡' },
+          { en: 'Specialty', zh: '特调咖啡' },
+          { en: 'Hand Brew', zh: '手冲咖啡' },
+          { en: 'Drinks & Tea', zh: '饮品茶饮' },
+          { en: 'Bakery & Dessert', zh: '烘焙甜点' }
+        ];
         
         const menuItems = ref([
-          // 意式咖啡
-          { id: 'c1', name: 'Espresso / 意式浓缩', cat: '意式咖啡', price: 7000, desc: '双份浓缩，纯正原味' },
-          { id: 'c2', name: 'Light Americano / 轻美式', cat: '意式咖啡', price: 7500, desc: '清爽明亮' },
-          { id: 'c3', name: 'Dark Americano / 深美式', cat: '意式咖啡', price: 7500, desc: '浓烈醇厚坚果香' },
-          { id: 'c4', name: 'Latte / 拿铁', cat: '意式咖啡', price: 8000, desc: '丝滑蒸奶与经典浓缩' },
-          { id: 'c5', name: 'Cappuccino / 卡布奇诺', cat: '意式咖啡', price: 8000, desc: '绵密丰厚奶沫' },
-          { id: 'c6', name: 'Flat White / 澳白', cat: '意式咖啡', price: 8000, desc: '浓郁咖啡香与微奶沫' },
-          { id: 'c7', name: 'Caramel / 焦糖玛奇朵', cat: '意式咖啡', price: 8000, desc: '香甜焦糖层叠风味' },
-          { id: 'c8', name: 'Mocha / 摩卡咖啡', cat: '意式咖啡', price: 8000, desc: '浓醇巧克力的香甜' },
-          { id: 'c9', name: 'Apple Americano / 苹果美式', cat: '意式咖啡', price: 8000, desc: '清爽果香与咖啡融合' },
-          { id: 'c10', name: 'Orange Americano / 香橙美式', cat: '意式咖啡', price: 8000, desc: '鲜橙酸甜，清香提神' },
-          { id: 'c11', name: 'Lemon Americano / 柠檬冰咖啡', cat: '意式咖啡', price: 8000, desc: '柠檬冰爽清冽' },
-          { id: 'c12', name: 'Sicily / 西西里', cat: '意式咖啡', price: 8000, desc: '经典地中海风味冰咖啡' },
-          { id: 'c13', name: 'Coconut Latte / 生椰拿铁', cat: '意式咖啡', price: 8000, desc: '清甜生椰乳与浓缩' },
-          { id: 'c14', name: 'Wangzai Latte / 旺仔拿铁', cat: '意式咖啡', price: 8500, desc: '香甜旺仔奶香' },
-          { id: 'c15', name: 'Passion Americano / 百香美式', cat: '意式咖啡', price: 8000, desc: '浓郁百香果酸甜' },
-          { id: 'c16', name: 'Power Americano / 红牛美式', cat: '意式咖啡', price: 8000, desc: '活力红牛能量碰撞' },
+          // Espresso Coffee
+          { id: 'c1', name: 'Espresso / 意式浓缩', cat: 'Espresso', price: 7000, desc: 'Rich and authentic double shot' },
+          { id: 'c2', name: 'Light Americano / 轻美式', cat: 'Espresso', price: 7500, desc: 'Light and refreshing roast' },
+          { id: 'c3', name: 'Dark Americano / 深美式', cat: 'Espresso', price: 7500, desc: 'Bold nutty notes and rich crema' },
+          { id: 'c4', name: 'Latte / 拿铁', cat: 'Espresso', price: 8000, desc: 'Smooth steamed milk with espresso' },
+          { id: 'c5', name: 'Cappuccino / 卡布奇诺', cat: 'Espresso', price: 8000, desc: 'Classic velvety dense foam' },
+          { id: 'c6', name: 'Flat White / 澳白', cat: 'Espresso', price: 8000, desc: 'Strong espresso flavor with microfoam' },
+          { id: 'c7', name: 'Caramel Macchiato / 焦糖玛奇朵', cat: 'Espresso', price: 8000, desc: 'Sweet layered vanilla caramel flavor' },
+          { id: 'c8', name: 'Mocha / 摩卡咖啡', cat: 'Espresso', price: 8000, desc: 'Rich chocolate blended with espresso' },
+          { id: 'c9', name: 'Apple Americano / 苹果美式', cat: 'Espresso', price: 8000, desc: 'Refreshing crisp apple flavor' },
+          { id: 'c10', name: 'Orange Americano / 香橙美式', cat: 'Espresso', price: 8000, desc: 'Fresh citrus tang with dark espresso' },
+          { id: 'c11', name: 'Lemon Americano / 柠檬冰咖啡', cat: 'Espresso', price: 8000, desc: 'Iced invigorating lemon infusion' },
+          { id: 'c12', name: 'Sicily Coffee / 西西里', cat: 'Espresso', price: 8000, desc: 'Mediterranean iced citrus blend' },
+          { id: 'c13', name: 'Coconut Latte / 生椰拿铁', cat: 'Espresso', price: 8000, desc: 'Fresh coconut milk with fragrant coffee' },
+          { id: 'c14', name: 'Wangzai Latte / 旺仔拿铁', cat: 'Espresso', price: 8500, desc: 'Sweet Wangzai milk special latte' },
+          { id: 'c15', name: 'Passion Americano / 百香美式', cat: 'Espresso', price: 8000, desc: 'Tropical passion fruit and espresso' },
+          { id: 'c16', name: 'Power Americano / 红牛美式', cat: 'Espresso', price: 8000, desc: 'Red Bull energy collision' },
 
-          // 特调咖啡
-          { id: 'sc1', name: 'Spanish Latte / 西班牙拿铁', cat: '特调咖啡', price: 8000, desc: '香甜浓郁炼乳拿铁' },
-          { id: 'sc2', name: 'Tiramisu Latte / 提拉米苏拿铁', cat: '特调咖啡', price: 8500, desc: '如甜点般的醇厚风味' },
-          { id: 'sc3', name: 'Velvet Latte / 丝绒拿铁', cat: '特调咖啡', price: 8500, desc: '丝滑温润口感' },
-          { id: 'sc4', name: 'Merry Americano / 微醺冰美式', cat: '特调咖啡', price: 8500, desc: '独特微醺香气' },
-          { id: 'sc5', name: 'Kahlua / 利口酒冰爽咖啡', cat: '特调咖啡', price: 8500, desc: '甘露咖啡酒特调' },
-          { id: 'sc6', name: 'Cold Brew / 冷萃咖啡', cat: '特调咖啡', price: 9000, desc: '低温慢速萃取，甘甜柔滑' },
-          { id: 'sc7', name: 'Ice Drip / 冰滴咖啡', cat: '特调咖啡', price: 9000, desc: '滴滤慢萃，发酵香气丰富' },
+          // Specialty Coffee
+          { id: 'sc1', name: 'Spanish Latte / 西班牙拿铁', cat: 'Specialty', price: 8000, desc: 'Sweet condensed milk layered latte' },
+          { id: 'sc2', name: 'Tiramisu Latte / 提拉米苏拿铁', cat: 'Specialty', price: 8500, desc: 'Rich dessert-style cocoa coffee' },
+          { id: 'sc3', name: 'Velvet Latte / 丝绒拿铁', cat: 'Specialty', price: 8500, desc: 'Silky smooth balanced texture' },
+          { id: 'sc4', name: 'Merry Americano / 微醺冰美式', cat: 'Specialty', price: 8500, desc: 'Malty aroma chilled americano' },
+          { id: 'sc5', name: 'Kahlua Coffee / 利口酒冰爽咖啡', cat: 'Specialty', price: 8500, desc: 'Coffee liqueur signature special' },
+          { id: 'sc6', name: 'Cold Brew / 冷萃咖啡', cat: 'Specialty', price: 9000, desc: '12-hour slow extraction, naturally sweet' },
+          { id: 'sc7', name: 'Ice Drip / 冰滴咖啡', cat: 'Specialty', price: 9000, desc: 'Slow fermented drop by drop' },
 
-          // 手冲咖啡
-          { id: 'hb1', name: '洪都拉斯 雪利酒 / Honduras Sherry', cat: '手冲咖啡', price: 12000, desc: '雪利酒桶发酵处理｜酒香浓郁，莓果，黑巧克力' },
-          { id: 'hb2', name: '缅甸 眉苗 日晒 / Pyin Oo Lwin Natural', cat: '手冲咖啡', price: 9000, desc: '日晒处理｜热带水果，甜感明显，莓果，醇厚饱满' },
-          { id: 'hb3', name: '缅甸 眉苗/耶岸 水洗 / Washed', cat: '手冲咖啡', price: 9000, desc: '水洗处理｜柑橘，花香，茶感，干净清爽' },
+          // Hand Brew Coffee
+          { id: 'hb1', name: 'Honduras Sherry / 洪都拉斯 雪利酒', cat: 'Hand Brew', price: 12000, desc: 'Sherry Barrel Process | Wine aroma, berries, dark chocolate' },
+          { id: 'hb2', name: 'Pyin Oo Lwin Natural / 缅甸 眉苗 日晒', cat: 'Hand Brew', price: 9000, desc: 'Natural Process | Tropical fruits, pronounced sweetness, full body' },
+          { id: 'hb3', name: 'Pyin Oo Lwin / Ywangan Washed / 眉苗/耶岸 水洗', cat: 'Hand Brew', price: 9000, desc: 'Washed Process | Citrus, floral, tea-like, clean & crisp' },
 
-          // 饮品茶饮
-          { id: 'd1', name: 'Milk / 牛奶', cat: '饮品茶饮', price: 7500, desc: '纯正温热/冰牛奶' },
-          { id: 'd2', name: 'Orange Juice / 橙汁', cat: '饮品茶饮', price: 7500, desc: '鲜甜多汁' },
-          { id: 'd3', name: 'Watermelon / 西瓜汁', cat: '饮品茶饮', price: 7500, desc: '清爽解渴' },
-          { id: 'd4', name: 'Lemon Juice / 柠檬汁', cat: '饮品茶饮', price: 7500, desc: '清冽酸爽' },
-          { id: 'd5', name: 'Apple Juice / 苹果汁', cat: '饮品茶饮', price: 7500, desc: '清新果甜' },
-          { id: 'd6', name: 'Strawberry / 草莓奶', cat: '饮品茶饮', price: 8500, desc: '粉嫩莓香奶饮' },
-          { id: 'd7', name: 'Matcha Latte / 抹茶奶', cat: '饮品茶饮', price: 8000, desc: '清雅抹茶与鲜奶' },
-          { id: 'd8', name: 'Taro Latte / 紫薯奶', cat: '饮品茶饮', price: 8000, desc: '香浓温润' },
-          { id: 'd9', name: 'Thai Tea / 泰式奶茶', cat: '饮品茶饮', price: 8000, desc: '浓郁地道泰茶香' },
-          { id: 'd10', name: 'Chocolate / 巧克力', cat: '饮品茶饮', price: 8000, desc: '浓厚可可香气' },
-          { id: 'd11', name: 'Blue Ocean / 蓝色海洋', cat: '饮品茶饮', price: 8000, desc: '梦幻清爽特饮' },
-          { id: 'd12', name: 'Lemon Tea / 柠檬冰红茶', cat: '饮品茶饮', price: 7500, desc: '茶香柠爽' },
-          { id: 'd13', name: 'Passion Juice / 百香果汁', cat: '饮品茶饮', price: 7500, desc: '热带酸甜' },
-          { id: 'd14', name: 'Passion Soda / 日落百香果', cat: '饮品茶饮', price: 8000, desc: '气泡百香果，清凉爽口' },
+          // Drinks & Tea
+          { id: 'd1', name: 'Fresh Milk / 牛奶', cat: 'Drinks & Tea', price: 7500, desc: 'Warm or iced fresh milk' },
+          { id: 'd2', name: 'Orange Juice / 橙汁', cat: 'Drinks & Tea', price: 7500, desc: 'Fresh and fruity' },
+          { id: 'd3', name: 'Watermelon Juice / 西瓜汁', cat: 'Drinks & Tea', price: 7500, desc: 'Cooling fresh watermelon' },
+          { id: 'd4', name: 'Lemon Juice / 柠檬汁', cat: 'Drinks & Tea', price: 7500, desc: 'Zesty and tangy' },
+          { id: 'd5', name: 'Apple Juice / 苹果汁', cat: 'Drinks & Tea', price: 7500, desc: 'Crisp and sweet' },
+          { id: 'd6', name: 'Strawberry Milk / 草莓奶', cat: 'Drinks & Tea', price: 8500, desc: 'Sweet strawberry with milk' },
+          { id: 'd7', name: 'Matcha Latte / 抹茶奶', cat: 'Drinks & Tea', price: 8000, desc: 'Japanese matcha with fresh milk' },
+          { id: 'd8', name: 'Taro Latte / 紫薯奶', cat: 'Drinks & Tea', price: 8000, desc: 'Creamy purple yam flavor' },
+          { id: 'd9', name: 'Thai Milk Tea / 泰式奶茶', cat: 'Drinks & Tea', price: 8000, desc: 'Authentic rich Thai tea' },
+          { id: 'd10', name: 'Chocolate / 巧克力', cat: 'Drinks & Tea', price: 8000, desc: 'Rich decadent cocoa' },
+          { id: 'd11', name: 'Blue Ocean / 蓝色海洋', cat: 'Drinks & Tea', price: 8000, desc: 'Sparkling blue soda signature' },
+          { id: 'd12', name: 'Lemon Iced Tea / 柠檬冰红茶', cat: 'Drinks & Tea', price: 7500, desc: 'Black tea with fresh lemon slices' },
+          { id: 'd13', name: 'Passion Juice / 百香果汁', cat: 'Drinks & Tea', price: 7500, desc: 'Tropical aromatic sweet passion fruit' },
+          { id: 'd14', name: 'Passion Soda / 日落百香果', cat: 'Drinks & Tea', price: 8000, desc: 'Fizzy refreshing passion soda' },
 
-          // 烘焙甜点
-          { id: 'b1', name: '可颂 Croissant', cat: '烘焙甜点', price: 5000, desc: '酥脆千层黄油香' },
-          { id: 'b2', name: '韩式蒜香面包', cat: '烘焙甜点', price: 7500, desc: '浓郁蒜香乳酪馅' },
-          { id: 'b3', name: '岩烧厚切', cat: '烘焙甜点', price: 7000, desc: '浓郁芝士烤吐司' },
-          { id: 'b4', name: '马里奥面包', cat: '烘焙甜点', price: 5000, desc: '松软香甜' },
-          { id: 'b5', name: '巧克力面包', cat: '烘焙甜点', price: 5000, desc: '醇浓巧克力内心' },
-          { id: 'b6', name: '提拉米苏 Tiramisu', cat: '烘焙甜点', price: 12000, desc: '经典意式手工甜点' },
-          { id: 'b7', name: '原味巴斯克 Basque', cat: '烘焙甜点', price: 10000, desc: '焦香浓郁芝士内心' },
-          { id: 'b8', name: '巧克力巴斯克 Chocolate Basque', cat: '烘焙甜点', price: 10000, desc: '法芙娜黑巧芝士' },
-          { id: 'b9', name: '蓝莓千层 Mille Crepe', cat: '烘焙甜点', price: 10000, desc: '层层细腻蓝莓果香' },
-          { id: 'b10', name: '起司千层 Cheese Mille Crepe', cat: '烘焙甜点', price: 10000, desc: '轻柔芝士与薄饼' }
+          // Bakery & Dessert
+          { id: 'b1', name: 'Croissant / 可颂', cat: 'Bakery & Dessert', price: 5000, desc: 'Flaky golden buttery layers' },
+          { id: 'b2', name: 'Garlic Bread / 韩式蒜香面包', cat: 'Bakery & Dessert', price: 7500, desc: 'Korean cream cheese garlic bread' },
+          { id: 'b3', name: 'Lava Toast / 岩烧厚切', cat: 'Bakery & Dessert', price: 7000, desc: 'Toasted cheese crust thick bread' },
+          { id: 'b4', name: 'Mario Bread / 马里奥面包', cat: 'Bakery & Dessert', price: 5000, desc: 'Soft and sweet traditional treat' },
+          { id: 'b5', name: 'Chocolate Bun / 巧克力面包', cat: 'Bakery & Dessert', price: 5000, desc: 'Rich melted chocolate filling' },
+          { id: 'b6', name: 'Tiramisu / 提拉米苏', cat: 'Bakery & Dessert', price: 12000, desc: 'Classic Italian artisan dessert' },
+          { id: 'b7', name: 'Basque Cheesecake / 原味巴斯克', cat: 'Bakery & Dessert', price: 10000, desc: 'Caramelized burnt top, creamy center' },
+          { id: 'b8', name: 'Chocolate Basque / 巧克力巴斯克', cat: 'Bakery & Dessert', price: 10000, desc: 'Dark chocolate burnt cheese cake' },
+          { id: 'b9', name: 'Blueberry Crepe / 蓝莓千层', cat: 'Bakery & Dessert', price: 10000, desc: 'Delicate layers with wild blueberry cream' },
+          { id: 'b10', name: 'Cheese Mille Crepe / 起司千层', cat: 'Bakery & Dessert', price: 10000, desc: 'Light savory cheese cream crepe cake' }
         ]);
 
         onMounted(() => {
@@ -206,7 +214,7 @@
         const submitOrder = () => {
           submitting.value = true;
           setTimeout(() => {
-            alert(`【点单成功】\n桌号：${tableNumber.value}\n方式：${payMethod.value === 'CASH' ? '到吧台付现金' : '扫码支付'}\n我们会尽快为您制作！`);
+            alert(`Order Placed Successfully! / 点单成功\nTable / 桌号: ${tableNumber.value}\nPayment / 支付: ${payMethod.value === 'CASH' ? 'Cash at Counter' : 'QR Payment'}`);
             cart.value = {};
             showModal.value = false;
             submitting.value = false;
