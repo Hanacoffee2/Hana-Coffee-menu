@@ -15,7 +15,7 @@ export default async function handler(req, res) {
     const { table, payment, note, items, totalAmount } = req.body;
 
     // 填入你的 Loyverse Token
-    const LOYVERSE_TOKEN = "在此填入你的Access_Token";
+    const LOYVERSE_TOKEN = "a4328cb65f024ec390a7c56d8367d1f2";
     const STORE_ID = "0d505168-6122-4b16-846d-a8ef254af4c6";
 
     const line_items = items.map(item => ({
